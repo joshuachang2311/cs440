@@ -1,5 +1,6 @@
 from utils import compute_mst_cost, is_english_word, levenshteinDistance
 from abc import ABC, abstractmethod
+import numpy as np
 
 # NOTE: using this global index means that if we solve multiple 
 #       searches consecutively the index doesn't reset to 0...
@@ -140,7 +141,7 @@ class WordLadderState(AbstractState):
 # TODO(IV): implement this method (also need it for parts V and VI)
 # Manhattan distance between two points (a=(a1,a2), b=(b1,b2))
 def manhattan(a, b):
-    return 0
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 
 class EightPuzzleState(AbstractState):
@@ -163,6 +164,31 @@ class EightPuzzleState(AbstractState):
         # NOTE: There are *up to 4* possible neighbors and the order you add them matters for tiebreaking
         #   Please add them in the following order: [below, left, above, right], where for example "below" 
         #   corresponds to moving the empty tile down (moving the tile below the empty tile up)
+        x, y = self.zero_loc
+        if x < 2:
+            temp_state = np.array(self.state)
+            temp_state[x][y] = temp_state[x + 1][y]
+            temp_state[x + 1][y] = 0
+            nbr_states.append(EightPuzzleState(
+                temp_state.tolist(), self.goal, self.dist_from_start + 1, self.use_heuristic, (x + 1, y)))
+        if y > 0:
+            temp_state = np.array(self.state)
+            temp_state[x][y] = temp_state[x][y - 1]
+            temp_state[x][y - 1] = 0
+            nbr_states.append(EightPuzzleState(
+                temp_state.tolist(), self.goal, self.dist_from_start + 1, self.use_heuristic, (x, y - 1)))
+        if x > 0:
+            temp_state = np.array(self.state)
+            temp_state[x][y] = temp_state[x - 1][y]
+            temp_state[x - 1][y] = 0
+            nbr_states.append(EightPuzzleState(
+                temp_state.tolist(), self.goal, self.dist_from_start + 1, self.use_heuristic, (x - 1, y)))
+        if y < 2:
+            temp_state = np.array(self.state)
+            temp_state[x][y] = temp_state[x][y + 1]
+            temp_state[x][y + 1] = 0
+            nbr_states.append(EightPuzzleState(
+                temp_state.tolist(), self.goal, self.dist_from_start + 1, self.use_heuristic, (x, y + 1)))
         
         return nbr_states
 
@@ -180,16 +206,27 @@ class EightPuzzleState(AbstractState):
     
     # TODO(IV): implement this method
     def compute_heuristic(self):
-        total = 0
         # NOTE: There is more than one possible heuristic, 
         #       please implement the Manhattan heuristic, as described in the MP instructions
+        current_coordinates = [(0, 0) for _ in range(9)]
+        goal_coordinates = [(0, 0) for _ in range(9)]
+        for i in range(3):
+            for j in range(3):
+                current_coordinates[self.state[i][j]] = (i, j)
+                goal_coordinates[self.goal[i][j]] = (i, j)
         
-        return total
+        return sum([
+            manhattan(current_coordinate, goal_coordinate) for current_coordinate, goal_coordinate in
+            zip(current_coordinates[1:], goal_coordinates[1:])
+        ])
     
     # TODO(IV): implement this method
     # Hint: it should be identical to what you wrote in WordLadder.__lt__(self, other)
     def __lt__(self, other):
-        pass
+        self_distance = self.dist_from_start + self.h
+        other_distance = other.dist_from_start + other.h
+        return self_distance < other_distance if self_distance != other_distance else \
+            self.tiebreak_idx < other.tiebreak_idx
     
     # str and repr just make output more readable when you print out states
     def __str__(self):

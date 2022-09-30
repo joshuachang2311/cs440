@@ -40,7 +40,11 @@ def best_first_search(starting_state):
         current_state = heapq.heappop(frontier)
         if current_state.is_goal():
             goal_state = current_state
-            continue
+            break
+        # if current_state in fully_explored_states:
+        #     continue
+        # if all([neighbor in visited_states for neighbor in neighbors]):
+        #     fully_explored_states.add(current_state)
         for neighbor in current_state.get_neighbors():
             total_distance = neighbor.dist_from_start + neighbor.h
             if neighbor in visited_states and visited_states[neighbor][1] < total_distance:
