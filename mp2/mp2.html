@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<!-- saved from url=(0076)https://courses.grainger.illinois.edu/cs440/fa2022/MPs/mp2/instructions.html -->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang=""><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="generator" content="pandoc">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>instructions</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+  </style>
+  <link rel="stylesheet" href="./mp2_files/pandoc.css">
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body class="vsc-initialized">
+<h1 id="cs440ece448-fall-2022-homework-2-a-search">CS440/ECE448 Fall
+2022, Homework 2: A* Search</h1>
+<h2 id="due-friday-september-30-1159pm">Due: Friday, September 30,
+11:59pm</h2>
+<h2 id="i.-overview">I. Overview</h2>
+<p>In this assignment you will be implementing the A* search algorithm
+for solving 3 different search problems - EightPuzzle, WordLadder, and
+GridSearch. Your single implementation of the algorithm will work for
+all 3 problems, by properly instantiating an AbstractState class for
+each of them. You will see both the power of A* as an algorithm that
+applies to arbitrary discrete state spaces, and the power of heuristics
+to speed up search.</p>
+<h2 id="ii.-getting-started">II. Getting Started</h2>
+<p>To get started on this assignment, download the <a href="https://courses.grainger.illinois.edu/cs440/fa2022/MPs/mp2/template.zip">template code</a>. The template contains the following
+files and directories:</p>
+<ul>
+<li><p><code>search.py</code>. You will edit and submit this - your
+implementation of A* goes here.</p></li>
+<li><p><code>state.py</code>. You will edit and submit this - your
+implementation of each problem’s State goes here.</p></li>
+<li><p><code>utils.py</code>. Some utilities we provide.</p></li>
+<li><p><code>maze.py</code>. Some utilities for reading and working with
+grid mazes.</p></li>
+<li><p><code>main.py</code>. You will run this file to test your
+code.</p></li>
+<li><p><code>data/eight_puzzle</code>. Text files containing example
+problems for the eight puzzle task</p></li>
+<li><p><code>data/word_ladder</code>. Text file containing example
+problems for the word ladder task, along with a dictionary of english
+words</p></li>
+<li><p><code>data/mazes</code>. Files containing example mazes to
+solve</p></li>
+</ul>
+<p>Please ONLY submit <code>search.py</code> and
+<code>state.py</code>.</p>
+<p>For each of the remaining parts of the assignment you will find TODOs
+in <code>search.py</code> and <code>state.py</code> where you need to
+write your own code. For example, for part III you will find TODOs
+marked <code># TODO(III)</code>. We’ve provided many comments and
+instructions in the code under those TODOs.</p>
+<h2 id="iii.-implementing-best-first-search-and-wordladder">III.
+Implementing Best First Search (and WordLadder)</h2>
+<figure align="center">
+<img src="./mp2_files/head_to_tail_word_ladder.png" width="400" height="400">
+<figcaption align="center">
+<b>WordLadder: find a sequence of English words from some starting word
+(i.e., “head”) to some goal word (i.e., “tail”), where consecutive words
+differ by only one letter</b>
+</figcaption>
+</figure>
+<p>There are 2 “TODO(III)” in <code>search.py</code>.</p>
+<p>Your first task is to implement a generic best first search algorithm
+in the method <code>best_first_search(starting_state)</code> in
+<code>search.py</code>. Your implementation should:</p>
+<ul>
+<li>use a priority queue (<a href="https://docs.python.org/3/library/heapq.html">heapq</a>) of states
+on the “frontier”</li>
+<li>use a dictionary that keeps track of the states which have been
+visited</li>
+<li>iteratively search through the neighbors of each state until you
+find the shortest path to the goal</li>
+<li>if you do not find the goal you should return an empty list</li>
+</ul>
+<!-- - iteratively:
+    - pop the first element from this frontier
+    - check if the popped element is the goal of the search
+        - if yes, the search should terminate and return the final path (through backtracking)
+    - if no, add neighbors of the popped element to the frontier
+        - do not add a neighbor if they have been visited before using a shorter path -->
+<p>Notice that the input to <code>best_first_search</code> is just a
+starting state. You may be wondering:</p>
+<ul>
+<li>How do you find the neighbors of a state?</li>
+<li>How do you know if you’ve reached the goal?</li>
+<li>How can you hash state objects into a dictionary?</li>
+<li>How can you push state objects onto a sorted heap?</li>
+</ul>
+<p>Now you should look at <code>state.py</code>, there are 3 “TODO(III)”
+in <code>state.py</code>. These questions should be answered by the
+comments in the code under those TODOs. You should first read through
+our <code>AbstractState</code> class, then look at an instantiation of
+this class called <code>WordLadderState</code>.</p>
+<p>In order to test your search code we’ve provided almost all of
+<code>WordLadderState</code>. Once you’ve filled in the missing code,
+and implemented the search code, you should be able to test your
+algorithm. Make sure your algorithm works on all the provided tests
+before moving on to the next parts. If it works you will not have to
+touch it again!</p>
+<p>Run best_first_search on all WordLadder problems:</p>
+<pre><code>python3 main.py --problem_type=WordLadder </code></pre>
+<h2 id="iv.-eightpuzzle">IV. EightPuzzle</h2>
+<figure align="center">
+<img src="./mp2_files/8_puzzle.png" width="800" height="400">
+<figcaption align="center">
+<b>EightPuzzle: find a sequence of tile moves that put each number in
+its final position (right) from some example starting position (left).
+You can only move a tile that is adjacent to the empty square into the
+empty square.</b>
+</figcaption>
+</figure>
+<p>Now move on to EightPuzzleState, we’ve provided some but not all of
+the code you’ll need here. There are 4 “TODO(IV)” in
+<code>state.py</code>.</p>
+<ul>
+<li>Implement <code>manhattan(a,b)</code>
+<ul>
+<li>you will need this for computing the heuristic, you will also need
+this for parts V and VI</li>
+</ul></li>
+<li>Implement <code>EightPuzzleState.get_neighbors(self)</code>
+<ul>
+<li>In EightPuzzle the possible actions are to move an adjacent tile
+into the empty square (indicated by a zero)</li>
+<li>There are up to 4 possible neighbors for each state, though if the
+empty tile is on the edge there are fewer</li>
+<li>The order you add states onto the frontier matters for tiebreaking
+<ul>
+<li>You should add them in the order [below, left, above, right], where
+for example “below” corresponds to moving the empty tile down (moving
+the tile below the empty tile up). See the figure below for
+details.</li>
+</ul></li>
+</ul></li>
+<li>Implement <code>EightPuzzleState.compute_heuristic(self)</code>
+<ul>
+<li>There is more than one valid heuristic for this problem, the one we
+ask you to implement is Manhattan
+<ul>
+<li>Manhattan heuristic for Eight Puzzle is the sum of the manhattan
+distances from each tile to its goal location (not counting the empty
+tile)</li>
+<li>This is a valid heuristic because each tile must move at least its
+manhattan distance times to reach its goal, and you can only move one
+tile at a time.</li>
+</ul></li>
+</ul></li>
+<li>Implement <code>EightPuzzleState.__lt__(self, other)</code></li>
+</ul>
+<p>Run best_first_search on EightPuzzle problems (all puzzles with
+puzzle_len=N can be solved in N steps):</p>
+<pre><code>python3 main.py --problem_type=EightPuzzle --puzzle_len=5 </code></pre>
+<p>You can choose any puzzle length among [5, 10, 27].</p>
+<figure align="center">
+<img src="./mp2_files/8_puzzle_move_order.png" width="400" height="400">
+<figcaption align="center">
+<b>Please add neighbors in this move order (a,b,c,d) to be consistent
+with our implementation. The manhattan heuristic for this example is: 3
+(number of moves 1 is away from its goal location) + 1 + 2 + 2 + 2 + 3 +
+3 + 2 (number of moves 8 is away from its goal location) = 18. This
+means this puzzle takes at least 18 moves to solve. </b>
+</figcaption>
+</figure>
+<h2 id="v.-single-goal-grid-search">V. Single Goal Grid Search</h2>
+<figure align="center">
+<img src="./mp2_files/grid_search_single.png" width="600" height="300">
+<figcaption align="center">
+<b>In grid search we find a path through a 2D maze from some starting
+location to a single goal location. Each state is a discrete (x,y)
+location in the maze, and the goal is an additional location in the
+maze. From any location you can transition to a neighboring location
+assuming there is no obstacle there (colored black). In the
+visualization above green indicates the end of the path and red
+indicates the beginning. </b>
+</figcaption>
+</figure>
+<p>Finally we come to GridSearch.</p>
+<p>Run the following to see mazes and navigate them yourself with the
+arrow keys:</p>
+<pre><code>python3 main.py --problem_type=GridSingle --human --maze_file=[path_to_maze_file in data/mazes/grid_single] </code></pre>
+<ul>
+<li><strong>note</strong>: if the red-green gradient is hard for you to
+see, you can make the visualization use an alternative color scheme by
+specifying the <code>--altcolor</code> option</li>
+</ul>
+<p>Now you will need to implement the <code>SingleGoalGridState</code>
+class. If you would like to see how the maze is built navigate to
+<code>maze.py</code>, but otherwise we’ve provided you everything you
+need and instructions in <code>state.py</code> where you have 4
+“TODO(V)” to complete. The heuristic we use for grid search is the
+manhattan distance from the current location to the goal.</p>
+<p>You can test your code with:</p>
+<pre><code>python3 main.py --problem_type=GridSingle --maze_file=[path_to_maze_file in data/mazes/grid_single] </code></pre>
+<p>If you would like to also visualize the resulting solution in PyGame
+add the <code>--show_maze_vis</code> flag.</p>
+<h2 id="vi.-multi-goal-grid-search">VI. Multi Goal Grid Search</h2>
+<figure align="center">
+<img src="./mp2_files/grid_multi_maze.png" width="800" height="300">
+<figcaption align="center">
+<b>Now we consider grid search problems with multiple goals that can be
+reached in any order</b>
+</figcaption>
+</figure>
+<p>We now generalize single goal grid search to multi goal grid search.
+There are 5 “TODO(VI)” for you to complete in <code>state.py</code>.</p>
+<p>Multiple goals requires a new heuristic. The one we use is the
+Minimum Spanning Tree (MST). Specifically, given a state and a set of
+goals, the heuristic cost for visiting all the goals is computed as
+follows:</p>
+<ul>
+<li>Treat the set of goals as nodes in a complete graph</li>
+<li>The edge weights on this graph are the distances between the goals
+(or approximate distances using manhattan)</li>
+<li>To solve the multi goal search problem (i.e., a version of the
+Travelling Salesman Problem) we must travel AT LEAST the cost of the MST
+of this graph</li>
+<li>In addition to the cost of the MST we also need to reach the first
+goal, therefore our final heuristic is:
+<ul>
+<li>h(state, goals) = manhattan(state, closest_goal) + MST(goals)</li>
+</ul></li>
+</ul>
+<p>We provide you with most of the code you need to compute this MST
+heuristic, you can call
+<code>compute_mst_cost(self.goal, manhattan)</code> to compute the cost
+of the minimum spanning tree for a set of goals. <strong>Note that
+because computing the mst takes some time, you should store the computed
+mst values in the cache we provide you.</strong></p>
+<p>You can test your code with:</p>
+<pre><code>python3 main.py --problem_type=GridMulti --maze_file=[path_to_maze_file in data/mazes/grid_multi]</code></pre>
+<p>You can also check backwards compatibility by running GridMulti on a
+maze file with only one goal.</p>
+<h3 id="vii-submission-instructions">VII Submission Instructions</h3>
+<p>Submit the main part of this assignment by uploading
+<code>search.py</code> and <code>state.py</code> to Gradescope.</p>
+<h3 id="policies">Policies</h3>
+<p>You are expected to be familiar with the general policies on the
+course syllabus (e.g.&nbsp;academic integrity) and on the top-level MP page
+(e.g.&nbsp;code style). In particular, notice that this is an individual
+assignment.</p>
+
+
+</body></html>
