@@ -1,8 +1,9 @@
 import heapq
 # You do not need any other imports
 
+
 def best_first_search(starting_state):
-    '''
+    """
     Implementation of best first search algorithm
 
     Input:
@@ -12,7 +13,7 @@ def best_first_search(starting_state):
         A path consisting of a list of AbstractState states
         The first state should be starting_state
         The last state should have state.is_goal() == True
-    '''
+    """
     # we will use this visited_states dictionary to serve multiple purposes
     # - visited_states[state] = (parent_state, distance_of_state_from_start)
     #   - keep track of which states have been visited by the search 
@@ -21,6 +22,7 @@ def best_first_search(starting_state):
     #       - if we find a shorter path to the same state we can update with the new state 
     # NOTE: we can hash states because the __hash__/__eq__ method of AbstractState is implemented
     visited_states = {starting_state: (None, 0)}
+    fully_explored_states = set()
 
     # The frontier is a priority queue
     # You can pop from the queue using "heapq.heappop(frontier)"
@@ -36,22 +38,24 @@ def best_first_search(starting_state):
     #       - then call backtrack(visited_states, state)...
     # Your code here ---------------
     goal_state = None
-    while len(frontier):
+    while goal_state is None:
         current_state = heapq.heappop(frontier)
-        if current_state.is_goal():
-            goal_state = current_state
-            break
-        # if current_state in fully_explored_states:
-        #     continue
-        # if all([neighbor in visited_states for neighbor in neighbors]):
-        #     fully_explored_states.add(current_state)
-        for neighbor in current_state.get_neighbors():
+        neighbors = current_state.get_neighbors()
+        if all([neighbor in visited_states for neighbor in neighbors]):
+            fully_explored_states.add(current_state)
+            continue
+        for neighbor in neighbors:
+            if neighbor in fully_explored_states:
+                continue
             total_distance = neighbor.dist_from_start + neighbor.h
             if neighbor in visited_states and visited_states[neighbor][1] < total_distance:
-                pass
-            else:
-                visited_states[neighbor] = current_state, total_distance
-                heapq.heappush(frontier, neighbor)
+                continue
+
+            visited_states[neighbor] = current_state, total_distance
+            heapq.heappush(frontier, neighbor)
+            if neighbor.is_goal():
+                goal_state = neighbor
+                break
     # ------------------------------
     
     # if you do not find the goal return an empty list

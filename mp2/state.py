@@ -64,9 +64,9 @@ class AbstractState(ABC):
     @abstractmethod
     def __eq__(self, other):
         pass
-    
-# WordLadder ------------------------------------------------------------------------------------------------
 
+
+# WordLadder ------------------------------------------------------------------------------------------------
 
 # TODO(III): we've provided you most of WordLadderState, read through our comments and code below.
 #           The only thing you must do is fill in the WordLadderState.__lt__(self, other) method
@@ -135,8 +135,8 @@ class WordLadderState(AbstractState):
     def __repr__(self):
         return self.state
 
-# EightPuzzle ------------------------------------------------------------------------------------------------
 
+# EightPuzzle ------------------------------------------------------------------------------------------------
 
 # TODO(IV): implement this method (also need it for parts V and VI)
 # Manhattan distance between two points (a=(a1,a2), b=(b1,b2))
@@ -234,6 +234,7 @@ class EightPuzzleState(AbstractState):
     def __repr__(self):
         return "\n---\n"+"\n".join([" ".join([str(r) for r in c]) for c in self.state])
 
+
 # Grid ------------------------------------------------------------------------------------------------
 
 class SingleGoalGridState(AbstractState):
@@ -248,30 +249,35 @@ class SingleGoalGridState(AbstractState):
         
     # TODO(V): implement this method
     def get_neighbors(self):
-        nbr_states = []
         # We provide you with a method for getting a list of neighbors of a state,
         # you need to instantiate them as GridState objects
-        neighboring_grid_locs = self.maze_neighbors(*self.state)
-        
-        return nbr_states
+
+        return [
+            SingleGoalGridState(new_state, self.goal, self.dist_from_start + 1, self.use_heuristic, self.maze_neighbors)
+            for new_state in self.maze_neighbors(*self.state)
+        ]
 
     # TODO(V): implement this method, check if the current state is the goal state
     def is_goal(self):
-        pass
+        return self.state == self.goal[0]
     
     def __hash__(self):
         return hash(self.state)
+
     def __eq__(self, other):
         return self.state == other.state
     
     # TODO(V): implement this method
     # Compute the manhattan distance between self.state and self.goal 
     def compute_heuristic(self):
-        return 0
+        return manhattan(self.state, self.goal[0])
     
     # TODO(V): implement this method... should be unchanged from before
     def __lt__(self, other):
-        pass
+        self_distance = self.dist_from_start + self.h
+        other_distance = other.dist_from_start + other.h
+        return self_distance < other_distance if self_distance != other_distance else \
+            self.tiebreak_idx < other.tiebreak_idx
     
     # str and repr just make output more readable when your print out states
     def __str__(self):
