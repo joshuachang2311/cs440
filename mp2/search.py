@@ -38,7 +38,7 @@ def best_first_search(starting_state):
     #       - then call backtrack(visited_states, state)...
     # Your code here ---------------
     goal_state = None
-    while goal_state is None:
+    while goal_state is None and len(frontier):
         current_state = heapq.heappop(frontier)
         neighbors = current_state.get_neighbors()
         if all([neighbor in visited_states for neighbor in neighbors]):
@@ -60,6 +60,7 @@ def best_first_search(starting_state):
     
     # if you do not find the goal return an empty list
     return backtrack(visited_states, goal_state) if goal_state is not None else []
+
 
 # TODO(III): implement backtrack method, to be called by best_first_search upon reaching goal_state
 # Go backwards through the pointers in visited_states until you reach the starting state
