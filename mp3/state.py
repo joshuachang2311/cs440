@@ -14,7 +14,7 @@ def manhattan(a, b):
     @param b: a length-3 state tuple
     @return: the manhattan distance between a and b
     """
-    return 0
+    return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 
 from abc import ABC, abstractmethod
@@ -90,35 +90,41 @@ class MazeState(AbstractState):
     # TODO: implement this method
     # Unlike MP 2, we do not need to remove goals, because we only want to reach one of the goals
     def get_neighbors(self, ispart1=False):
-        nbr_states = []
-
         # We provide you with a method for getting a list of neighbors of a state
         # that uses the Maze's getNeighbors function.
         neighboring_locs = self.maze_neighbors(*self.state, part1=ispart1)
 
-        return nbr_states
+        return [
+            MazeState(loc, self.goal, self.dist_from_start + 1, self.maze, self.mst_cache, self.use_heuristic)
+            for loc in neighboring_locs
+        ]
 
     # TODO: implement this method
     def is_goal(self):
-        pass
+        return self.state in self.goal
 
     # TODO: implement these methods __hash__ AND __eq__
     def __hash__(self):
-        return 0
+        return hash(self.state)
+
     def __eq__(self, other):
-        return True
+        return self.state == other.state
 
     # TODO: implement this method
     # Our heuristic is: manhattan(self.state, nearest_goal). No need for MST.
     def compute_heuristic(self):
-        return 0
+        return min([manhattan(self.state, g) for g in self.goal])
     
     # TODO: implement this method. It should be similar to MP 2
     def __lt__(self, other):
-        pass
+        self_distance = self.dist_from_start + self.h
+        other_distance = other.dist_from_start + other.h
+        return self_distance < other_distance if self_distance != other_distance else \
+            self.tiebreak_idx < other.tiebreak_idx
     
     # str and repr just make output more readable when your print out states
     def __str__(self):
         return str(self.state) + ", goals=" + str(self.goal)
+
     def __repr__(self):
         return str(self.state) + ", goals=" + str(self.goal)
