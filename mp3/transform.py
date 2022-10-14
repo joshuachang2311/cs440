@@ -1,4 +1,3 @@
-
 # transform.py
 # ---------------
 # Licensing Information:  You are free to use or extend this projects for
@@ -14,6 +13,8 @@ to the maze.
 """
 import copy
 # from arm import Arm
+import numpy as np
+
 from maze import Maze
 from search import *
 from geometry import *
@@ -21,7 +22,8 @@ from const import *
 from utils import *
 import os
 
-def transformToMaze(alien, goals, walls, window,granularity):
+
+def transformToMaze(alien, goals, walls, window, granularity):
     """This function transforms the given 2D map to the maze in MP1.
     
         Args:
@@ -34,16 +36,33 @@ def transformToMaze(alien, goals, walls, window,granularity):
             Maze: the maze instance generated based on input arguments.
 
     """
-    pass
+    w, h = window
+    n_rows, n_cols = w // granularity + 1, h // granularity + 1
+    input_map = np.full((n_rows, n_cols, 3), ' ')
+    input_map[configToIdx(alien.get_config(), [0, 0, 0], granularity, alien)] = 'P'
+    for row in range(n_rows):
+        for col in range(n_cols):
+            for i_shape in range(3):
+                if input_map[row, col, i_shape] == 'P':
+                    continue
+                alien.set_alien_config(idxToConfig([row, col, i_shape], [0, 0, 0], granularity, alien))
+                if does_alien_touch_wall(alien, walls, granularity):
+                    input_map[row, col, i_shape] = '%'
+                elif does_alien_touch_goal(alien, goals):
+                    input_map[row, col, i_shape] = '.'
+
+    return Maze(input_map, alien, granularity=granularity)
+
 
 if __name__ == '__main__':
     import configparser
 
-    def generate_test_mazes(granularities,map_names):
+
+    def generate_test_mazes(granularities, map_names):
         for granularity in granularities:
             for map_name in map_names:
                 try:
-                    print('converting map {} with granularity {}'.format(map_name,granularity))
+                    print('converting map {} with granularity {}'.format(map_name, granularity))
                     configfile = './maps/test_config.txt'
                     config = configparser.ConfigParser()
                     config.read(configfile)
@@ -55,52 +74,60 @@ if __name__ == '__main__':
                     widths = eval(config.get(map_name, 'Widths'))
                     alien_shape = 'Ball'
                     lengths = eval(config.get(map_name, 'Lengths'))
-                    alien_shapes = ['Horizontal','Ball','Vertical']
+                    alien_shapes = ['Horizontal', 'Ball', 'Vertical']
                     obstacles = eval(config.get(map_name, 'Obstacles'))
-                    boundary = [(0,0,0,lims[1]),(0,0,lims[0],0),(lims[0],0,lims[0],lims[1]),(0,lims[1],lims[0],lims[1])]
+                    boundary = [(0, 0, 0, lims[1]), (0, 0, lims[0], 0), (lims[0], 0, lims[0], lims[1]),
+                                (0, lims[1], lims[0], lims[1])]
                     obstacles.extend(boundary)
                     goals = eval(config.get(map_name, 'Goals'))
-                    alien = Alien(centroid,lengths,widths,alien_shapes,alien_shape,window)
-                    generated_maze = transformToMaze(alien,goals,obstacles,window,granularity)
-                    generated_maze.saveToFile('./mazes/{}_granularity_{}.txt'.format(map_name,granularity))
+                    alien = Alien(centroid, lengths, widths, alien_shapes, alien_shape, window)
+                    generated_maze = transformToMaze(alien, goals, obstacles, window, granularity)
+                    generated_maze.saveToFile('./mazes/{}_granularity_{}.txt'.format(map_name, granularity))
                 except Exception as e:
-                    print('Exception at maze {} and granularity {}: {}'.format(map_name,granularity,e))
-    def compare_test_mazes_with_gt(granularities,map_names):
-        name_dict = {'%':'walls','.':'goals',' ':'free space','P':'start'}
-        shape_dict = ['Horizontal','Ball','Vertical']
+                    print('Exception at maze {} and granularity {}: {}'.format(map_name, granularity, e))
+
+
+    def compare_test_mazes_with_gt(granularities, map_names):
+        name_dict = {'%': 'walls', '.': 'goals', ' ': 'free space', 'P': 'start'}
+        shape_dict = ['Horizontal', 'Ball', 'Vertical']
         for granularity in granularities:
             for map_name in map_names:
-                this_maze_file = './mazes/{}_granularity_{}.txt'.format(map_name,granularity)
-                gt_maze_file = './mazes/gt_{}_granularity_{}.txt'.format(map_name,granularity)
-                if(not os.path.exists(gt_maze_file)):
-                    print('no gt available for map {} at granularity {}'.format(map_name,granularity))
+                this_maze_file = './mazes/{}_granularity_{}.txt'.format(map_name, granularity)
+                gt_maze_file = './mazes/gt_{}_granularity_{}.txt'.format(map_name, granularity)
+                if (not os.path.exists(gt_maze_file)):
+                    print('no gt available for map {} at granularity {}'.format(map_name, granularity))
                     continue
-                gt_maze = Maze([],[],{}, [],filepath = gt_maze_file)
-                this_maze = Maze([],[],{},[],filepath= this_maze_file)
+                gt_maze = Maze([], [], {}, [], filepath=gt_maze_file)
+                this_maze = Maze([], [], {}, [], filepath=this_maze_file)
                 gt_map = np.array(gt_maze.get_map())
                 this_map = np.array(this_maze.get_map())
-                difx,dify,difz = np.where(gt_map != this_map)
-                if(difx.size != 0):
+                difx, dify, difz = np.where(gt_map != this_map)
+                if difx.size != 0:
                     diff_dict = {}
-                    for i in ['%','.',' ','P']:
-                        for j in ['%','.',' ','P']:
-                            diff_dict[i + '_'+ j] = []
-                    print('\n\nDifferences in {} at granularity {}:'.format(map_name,granularity))    
-                    for i,j,k in zip(difx,dify,difz):
-                        gt_token = gt_map[i][j][k] 
+                    for i in ['%', '.', ' ', 'P']:
+                        for j in ['%', '.', ' ', 'P']:
+                            diff_dict[i + '_' + j] = []
+                    print('\n\nDifferences in {} at granularity {}:'.format(map_name, granularity))
+                    for i, j, k in zip(difx, dify, difz):
+                        gt_token = gt_map[i][j][k]
                         this_token = this_map[i][j][k]
-                        diff_dict[gt_token + '_' + this_token].append(noAlienidxToConfig((j,i,k),granularity,shape_dict))
+                        diff_dict[gt_token + '_' + this_token].append(
+                            noAlienidxToConfig((j, i, k), granularity, shape_dict))
                     for key in diff_dict.keys():
                         this_list = diff_dict[key]
                         gt_token = key.split('_')[0]
                         your_token = key.split('_')[1]
-                        if(len(this_list) != 0):
-                            print('Ground Truth {} mistakenly identified as {}: {}'.format(name_dict[gt_token],name_dict[your_token],this_list))
+                        if len(this_list) != 0:
+                            print('Ground Truth {} mistakenly identified as {}: {}'.format(name_dict[gt_token],
+                                                                                           name_dict[your_token],
+                                                                                           this_list))
                     print('\n\n')
                 else:
-                    print('no differences identified  in {} at granularity {}:'.format(map_name,granularity))
-    ### change these to speed up your testing early on! 
-    granularities = [2,5,8,10]
-    map_names = ['Test1','Test2','Test3','Test4','NoSolutionMap']
-    generate_test_mazes(granularities,map_names)
-    compare_test_mazes_with_gt(granularities,map_names)
+                    print('no differences identified  in {} at granularity {}:'.format(map_name, granularity))
+
+
+    # change these to speed up your testing early on!
+    granularities = [2, 5, 8, 10]
+    map_names = ['Test1', 'Test2', 'Test3', 'Test4', 'NoSolutionMap']
+    generate_test_mazes(granularities, map_names)
+    compare_test_mazes_with_gt(granularities, map_names)
