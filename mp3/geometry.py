@@ -17,7 +17,8 @@ import numpy as np
 from alien import Alien
 from typing import List, Tuple
 
-def does_alien_touch_wall(alien, walls,granularity):
+
+def does_alien_touch_wall(alien, walls, granularity):
     """Determine whether the alien touches a wall
 
         Args:
@@ -28,7 +29,10 @@ def does_alien_touch_wall(alien, walls,granularity):
         Return:
             True if touched, False if not
     """
-    return False
+    alien_segment = alien.get_head_and_tail()
+    return min([segment_distance(alien_segment, ((sx, sy), (ex, ey))) for sx, sy, ex, ey in walls]) \
+        <= alien.get_width() + granularity / np.sqrt(2)
+
 
 def does_alien_touch_goal(alien, goals):
     """Determine whether the alien touches a goal
@@ -40,9 +44,12 @@ def does_alien_touch_goal(alien, goals):
         Return:
             True if a goal is touched, False if not.
     """
-    return False
+    alien_segment = alien.get_head_and_tail()
+    return min([segment_distance(alien_segment, ((x, y), (x, y))) - r for x, y, r in goals]) \
+        <= alien.get_width()
 
-def is_alien_within_window(alien, window,granularity):
+
+def is_alien_within_window(alien, window, granularity):
     """Determine whether the alien stays within the window
         
         Args:
@@ -50,7 +57,13 @@ def is_alien_within_window(alien, window,granularity):
             window (tuple): (width, height) of the window
             granularity (int): The granularity of the map
     """
-    return True
+    alien_segment = alien.get_head_and_tail()
+    w, h = window
+    walls = [(0, 0, 0, h), (w, 0, w, h), (0, 0, w, 0), (0, h, w, h)]
+    return not does_alien_touch_wall(alien, walls, granularity) and \
+        0 <= alien_segment[0][0] <= w and 0 <= alien_segment[1][0] <= w and \
+        0 <= alien_segment[0][1] <= h and 0 <= alien_segment[1][1] <= h
+
 
 def point_segment_distance(point, segment):
     """Compute the distance from the point to the line segment.
@@ -63,7 +76,17 @@ def point_segment_distance(point, segment):
         Return:
             Euclidean distance from the point to the line segment.
     """
-    return -1
+    # Code derived from https://www.geeksforgeeks.org/minimum-distance-from-a-point-to-the-line-segment-using-vectors/
+    start, end = segment
+    e, a, b = np.array(point), np.array(start), np.array(end)
+    ab, be, ae = b - a, e - b, e - a
+    if ab @ be > 0:
+        return np.sqrt(be @ be)
+    elif ab @ ae < 0:
+        return np.sqrt(ae @ ae)
+    else:
+        return np.abs(ab[0] * ae[1] - ab[1] * ae[0]) / np.sqrt(ab @ ab)
+
 
 def do_segments_intersect(segment1, segment2):
     """Determine whether segment1 intersects segment2.  
@@ -77,7 +100,24 @@ def do_segments_intersect(segment1, segment2):
         Return:
             True if line segments intersect, False if not.
     """
-    return None
+
+    # Code derived from https://www.geeksforgeeks.org/check-if-two-given-line-segments-intersect/
+    def on_segment(p, q, r):
+        return max(p[0], r[0]) >= q[0] >= min(p[0], r[0]) and max(p[1], r[1]) >= q[1] >= min(p[1], r[1])
+
+    def orientation(p, q, r):
+        v = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
+        return 1 if v > 0 else (2 if v < 0 else 0)
+
+    (p1, q1), (p2, q2) = segment1, segment2
+    o1 = orientation(p1, q1, p2)
+    o2 = orientation(p1, q1, q2)
+    o3 = orientation(p2, q2, p1)
+    o4 = orientation(p2, q2, q1)
+
+    return (o1 != o2 and o3 != o4) or (o1 == 0 and on_segment(p1, p2, q1)) or (o2 == 0 and on_segment(p1, q2, q1)) \
+        or (o3 == 0 and on_segment(p2, p1, q2)) or (o4 == 0 and on_segment(p2, q1, q2))
+
 
 def segment_distance(segment1, segment2):
     """Compute the distance from segment1 to segment2.  You will need `do_segments_intersect`.
@@ -90,7 +130,17 @@ def segment_distance(segment1, segment2):
         Return:
             Euclidean distance between the two line segments.
     """
-    return -1
+    if do_segments_intersect(segment1, segment2):
+        return 0
+    (s1, e1), (s2, e2) = segment1, segment2
+    d = np.array(s2) - np.array(s1)
+    ans = [np.sqrt(d @ d)]
+    if s1 != e1:
+        ans += [point_segment_distance(s2, segment1), point_segment_distance(e2, segment1)]
+    if s2 != e2:
+        ans += [point_segment_distance(s1, segment2), point_segment_distance(e1, segment2)]
+    return min(ans)
+
 
 if __name__ == '__main__':
 
@@ -139,8 +189,9 @@ if __name__ == '__main__':
                     b = ((segments[k][0], segments[k][1]), (segments[k][2], segments[k][3]))
                     distance = segment_distance(a, b)
                     assert abs(result[i][j][k] - distance) <= 10 ** -3, f'The distance between segment {a} and ' \
-                                                                  f'{b} is expected to be {result[i]}, but your' \
-                                                                  f'result is {distance}'
+                                                                        f'{b} is expected to be {result[i]}, but your' \
+                                                                        f'result is {distance}'
+
 
     def test_helper(alien: Alien, position, truths):
         alien.set_alien_pos(position)
