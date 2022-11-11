@@ -25,8 +25,12 @@ from utils import get_dataset_from_arrays
 from torch.utils.data import DataLoader
 
 
+def standardize(x):
+    return (x - x.mean(dim=1, keepdim=True)) / x.std(dim=1, keepdim=True)
+
+
 class NeuralNet(nn.Module):
-    def __init__(self, lrate, loss_fn, in_size, out_size):
+    def __init__(self, lrate, loss_fn, in_size, out_size, momentum=0.9):
         """
         Initializes the layers of your neural network.
 
@@ -47,8 +51,10 @@ class NeuralNet(nn.Module):
         """
         super(NeuralNet, self).__init__()
         self.loss_fn = loss_fn
-        raise NotImplementedError("You need to write this part!")
-    
+        self.h = 64
+        self.fc1 = nn.Linear(in_size, self.h)
+        self.fc2 = nn.Linear(self.h, out_size)
+        self.optimizer = optim.SGD(self.parameters(), lr=lrate, momentum=momentum)
 
     def forward(self, x):
         """Performs a forward pass through your neural net (evaluates f(x)).
@@ -56,10 +62,11 @@ class NeuralNet(nn.Module):
         @param x: an (N, in_size) Tensor
         @return y: an (N, out_size) Tensor of output from the network
         """
-        raise NotImplementedError("You need to write this part!")
-        return torch.ones(x.shape[0], 1)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
 
-    def step(self, x,y):
+    def step(self, x, y):
         """
         Performs one gradient step through a batch of data x with labels y.
 
@@ -67,12 +74,16 @@ class NeuralNet(nn.Module):
         @param y: an (N,) Tensor
         @return L: total empirical risk (mean of losses) for this batch as a float (scalar)
         """
-        raise NotImplementedError("You need to write this part!")
-        return 0.0
+        x = standardize(x)
+        self.optimizer.zero_grad()
+        yhat = self(x)
+        loss = self.loss_fn(yhat, y)
+        loss.backward()
+        self.optimizer.step()
+        return float(torch.mean(loss).detach().cpu().numpy())
 
 
-
-def fit(train_set,train_labels,dev_set,epochs,batch_size=100):
+def fit(train_set, train_labels, dev_set, epochs, batch_size=100):
     """ Make NeuralNet object 'net' and use net.step() to train a neural net
     and net(x) to evaluate the neural net.
 
@@ -92,5 +103,17 @@ def fit(train_set,train_labels,dev_set,epochs,batch_size=100):
     @return yhats: an (M,) NumPy array of binary labels for dev_set
     @return net: a NeuralNet object
     """
-    raise NotImplementedError("You need to write this part!")
-    return [],[],None
+    # raise NotImplementedError("You need to write this part!")
+    net = NeuralNet(lrate=3e-3, loss_fn=F.cross_entropy, in_size=31 * 31 * 3, out_size=4, momentum=0.9)
+    train_loader = DataLoader(get_dataset_from_arrays(train_set, train_labels), batch_size=batch_size, shuffle=False)
+
+    losses = []
+    for epoch in range(epochs):
+        for batch in train_loader:
+            train_x = batch['features']
+            train_y = batch['labels']
+            net.step(train_x, train_y)
+        losses.append(float(F.cross_entropy(net(train_set), train_labels).detach().numpy()))
+    yhats = np.argmax(net(standardize(dev_set)).detach().numpy(), axis=1)
+
+    return losses, yhats, net
