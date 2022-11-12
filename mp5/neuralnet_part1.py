@@ -103,7 +103,6 @@ def fit(train_set, train_labels, dev_set, epochs, batch_size=100):
     @return yhats: an (M,) NumPy array of binary labels for dev_set
     @return net: a NeuralNet object
     """
-    # raise NotImplementedError("You need to write this part!")
     net = NeuralNet(lrate=3e-3, loss_fn=F.cross_entropy, in_size=31 * 31 * 3, out_size=4, momentum=0.9)
     train_loader = DataLoader(get_dataset_from_arrays(train_set, train_labels), batch_size=batch_size, shuffle=False)
 
