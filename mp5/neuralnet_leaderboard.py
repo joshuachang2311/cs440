@@ -45,19 +45,16 @@ class NeuralNet(nn.Module):
         super(NeuralNet, self).__init__()
         self.loss_fn = loss_fn
         self.layers = nn.Sequential(
-            nn.Conv2d(3, 16, kernel_size=(3, 3), padding=1),
-            nn.BatchNorm2d(16),
+            nn.Conv2d(3, 16, kernel_size=(3, 3), padding=0),
             nn.ReLU(),
-            nn.Conv2d(16, 64, kernel_size=(3, 3), padding=1),
-            nn.BatchNorm2d(64),
+            nn.MaxPool2d((2, 2)),
+            nn.Conv2d(16, 32, kernel_size=(3, 3), padding=0),
             nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Conv2d(64, 256, kernel_size=(2, 2), padding=0),
-            nn.BatchNorm2d(256),
             nn.ReLU(),
-            nn.MaxPool2d(2),
             nn.Flatten(),
-            nn.Linear(256 * 7 * 7, 4)
+            nn.Linear(32 * 12 * 12, 64),
+            nn.ReLU(),
+            nn.Linear(64, 4)
         )
         self.optimizer = optim.SGD(self.parameters(), lr=lrate, momentum=momentum)
 
@@ -79,7 +76,7 @@ class NeuralNet(nn.Module):
         @return L: total empirical risk (mean of losses) for this batch as a float (scalar)
         """
         x = standardize(x)
-        # x = torch.reshape(x, (len(x), 3, 31, 31))
+        x = torch.reshape(x, (len(x), 3, 31, 31))
         self.optimizer.zero_grad()
         yhat = self(x)
         loss = self.loss_fn(yhat, y)
@@ -108,7 +105,7 @@ def fit(train_set, train_labels, dev_set, epochs, batch_size=100):
     @return yhats: an (M,) NumPy array of binary labels for dev_set
     @return net: a NeuralNet object
     """
-    net = NeuralNet(lrate=3e-3, loss_fn=F.cross_entropy, in_size=31 * 31 * 3, out_size=4, momentum=0.9)
+    net = NeuralNet(lrate=1e-2, loss_fn=F.cross_entropy, in_size=31 * 31 * 3, out_size=4, momentum=0.9)
     train_loader = DataLoader(get_dataset_from_arrays(train_set, train_labels), batch_size=batch_size, shuffle=False)
 
     losses = []
