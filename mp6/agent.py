@@ -73,10 +73,31 @@ class Agent:
         s_prime = self.generate_state(environment)
 
         # TODO: write your function here
+        a_star = self.get_a_star(s_prime)
+        if self._train:
+            r = 1.0 if points > self.points else (-1.0 if dead else -0.1)
+            if self.s is not None and self.a is not None:
+                self.N[self.s][self.a] += 1
+                alpha = self.C / (self.C + self.N[self.s][self.a])
+                self.Q[self.s][self.a] += alpha * (r + self.gamma * np.max(self.Q[s_prime]) - self.Q[self.s][self.a])
 
-        return utils.UP
+        if dead:
+            self.reset()
+        else:
+            self.points = points
+            self.s = s_prime
+            self.a = a_star
 
-    def generate_state(self, environment):
+        return a_star
+
+    def get_a_star(self, s):
+        f = np.array(self.Q[s])
+        if self._train:
+            f[self.N[s] < self.Ne] = 1
+        return np.max(np.argwhere(f == np.max(f)))
+
+    @staticmethod
+    def generate_state(environment):
         snake_head_x, snake_head_y, snake_body, food_x, food_y = environment
         snake_body = set(snake_body)
         return (
@@ -84,8 +105,8 @@ class Agent:
             position_value(food_y, snake_head_y),
             adjoin_value(snake_head_x, utils.DISPLAY_WIDTH - 1),
             adjoin_value(snake_head_y, utils.DISPLAY_HEIGHT - 1),
-            1 if (snake_head_x - 1, snake_head_y) in snake_body else 0,
-            1 if (snake_head_x + 1, snake_head_y) in snake_body else 0,
             1 if (snake_head_x, snake_head_y - 1) in snake_body else 0,
-            1 if (snake_head_x, snake_head_y + 1) in snake_body else 0
+            1 if (snake_head_x, snake_head_y + 1) in snake_body else 0,
+            1 if (snake_head_x - 1, snake_head_y) in snake_body else 0,
+            1 if (snake_head_x + 1, snake_head_y) in snake_body else 0
         )
