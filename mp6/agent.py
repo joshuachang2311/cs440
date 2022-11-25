@@ -73,13 +73,12 @@ class Agent:
         s_prime = self.generate_state(environment)
 
         # TODO: write your function here
-        a_star = self.get_a_star(s_prime)
-        if self._train:
+        if self._train and self.s is not None and self.a is not None:
             r = 1.0 if points > self.points else (-1.0 if dead else -0.1)
-            if self.s is not None and self.a is not None:
-                self.N[self.s][self.a] += 1
-                alpha = self.C / (self.C + self.N[self.s][self.a])
-                self.Q[self.s][self.a] += alpha * (r + self.gamma * np.max(self.Q[s_prime]) - self.Q[self.s][self.a])
+            self.N[self.s][self.a] += 1
+            alpha = self.C / (self.C + self.N[self.s][self.a])
+            self.Q[self.s][self.a] += alpha * (r + self.gamma * np.max(self.Q[s_prime]) - self.Q[self.s][self.a])
+        a_star = self.get_a_star(s_prime)
 
         if dead:
             self.reset()
